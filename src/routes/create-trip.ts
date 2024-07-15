@@ -1,17 +1,16 @@
-import { FastifyInstance } from "fastify";
-import { ZodTypeProvider } from "fastify-type-provider-zod";
-import nodemailer from "nodemailer";
-import { request } from "http";
-import { z } from "zod";
-import { prisma } from "../lib/prisma";
-import { getMailClient } from "../lib/mail";
-import { dayjs } from "../lib/dayjs";
-import { ClientError } from "../errors/client-error";
-import { env } from "../env";
+import type { FastifyInstance } from 'fastify'
+import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import nodemailer from 'nodemailer'
+import { z } from 'zod'
+import { prisma } from '../lib/prisma'
+import { getMailClient } from '../lib/mail'
+import { dayjs } from '../lib/dayjs'
+import { ClientError } from '../errors/client-error'
+import { env } from '../env'
 
 export async function createTrip(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
-    "/trips",
+    '/trips',
     {
       schema: {
         body: z.object({
@@ -30,15 +29,16 @@ export async function createTrip(app: FastifyInstance) {
         starts_at,
         ends_at,
         owner_name,
-        emails_to_invite,
         owner_email,
-      } = request.body;
+        emails_to_invite,
+      } = request.body
 
       if (dayjs(starts_at).isBefore(new Date())) {
-        throw new ClientError("Invalid trip start date.");
+        throw new ClientError('Invalid trip start date.')
       }
+
       if (dayjs(ends_at).isBefore(starts_at)) {
-        throw new ClientError("Invalid trip end date.");
+        throw new ClientError('Invalid trip end date.')
       }
 
       const trip = await prisma.trip.create({
@@ -56,25 +56,25 @@ export async function createTrip(app: FastifyInstance) {
                   is_confirmed: true,
                 },
                 ...emails_to_invite.map((email) => {
-                  return { email };
+                  return { email }
                 }),
               ],
             },
           },
         },
-      });
+      })
 
-      const formattedStartDate = dayjs(starts_at).format('LL');
-      const formattedEndDate = dayjs(ends_at).format('LL');
+      const formattedStartDate = dayjs(starts_at).format('LL')
+      const formattedEndDate = dayjs(ends_at).format('LL')
 
-      const confirmationLink = `${env.API_BASE_URL}/trips/${trip.id}/confirm`;
+      const confirmationLink = `${env.API_BASE_URL}/trips/${trip.id}/confirm`
 
-      const mail = await getMailClient();
+      const mail = await getMailClient()
 
       const message = await mail.sendMail({
         from: {
-          name: "Equipe plann.er",
-          address: "suporte@plann.er",
+          name: 'Equipe plann.er',
+          address: 'oi@plann.er',
         },
         to: {
           name: owner_name,
@@ -82,23 +82,23 @@ export async function createTrip(app: FastifyInstance) {
         },
         subject: `Confirme sua viagem para ${destination} em ${formattedStartDate}`,
         html: `
-          <div style="font-family: sans-serif; font-size: 16px; line-height: 1.6;">
-            <p>Você solicitou a criação de uma viagem para <strong>${destination}</strong> nas datas de <strong>${formattedStartDate}</strong> até <strong>${formattedEndDate}</strong>.</p>
-            <p></p>
-            <p>para confirmar a sua viagem, clique no link abaixo:</p>
-            <p></p>
-            <p>
-                <a href="${confirmationLink}">Confirma viagem.</a>
-            </p>
-            <p></p>
-            <p>Caso você não saiba do que se trata esse e-amil, apenas ignore esse e-mail.</p>
+        <div style="font-family: sans-serif; font-size: 16px; line-height: 1.6;">
+          <p>Você solicitou a criação de uma viagem para <strong>${destination}</strong> nas datas de <strong>${formattedStartDate}</strong> até <strong>${formattedEndDate}</strong>.</p>
+          <p></p>
+          <p>Para confirmar sua viagem, clique no link abaixo:</p>
+          <p></p>
+          <p>
+            <a href="${confirmationLink}">Confirmar viagem</a>
+          </p>
+          <p></p>
+          <p>Caso você não saiba do que se trata esse e-mail, apenas ignore esse e-mail.</p>
         </div>
-        `.trim(),
-      });
+      `.trim(),
+      })
 
-      console.log(nodemailer.getTestMessageUrl(message));
+      console.log(nodemailer.getTestMessageUrl(message))
 
-      return { tripId: trip.id };
-    }
-  );
+      return { tripId: trip.id }
+    },
+  )
 }

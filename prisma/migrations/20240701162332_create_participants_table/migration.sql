@@ -6,6 +6,5 @@ CREATE TABLE "participants" (
     "is_confirmed" BOOLEAN NOT NULL DEFAULT false,
     "is_owner" BOOLEAN NOT NULL DEFAULT false,
     "trip_id" TEXT NOT NULL,
-    "tripId" TEXT NOT NULL,
-    CONSTRAINT "participants_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "trips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "participants_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
